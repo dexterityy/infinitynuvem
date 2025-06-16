@@ -78,7 +78,7 @@ detect_architecture() {
             echo "riscv64"
         ;;
         *)
-            error_exit "Unsupported CPU architecture: $ARCH"
+            error_exit "Arquitetura de CPU não suportada: $ARCH"
         ;;
     esac
 }
@@ -86,13 +86,13 @@ detect_architecture() {
 # Verify network connectivity
 check_network() {
     if ! curl -s --head "$BASE_URL" >/dev/null; then
-        error_exit "Unable to connect to $BASE_URL. Please check your internet connection."
+        error_exit "Não é possível conectar a $BASE_URL. Verifique sua conexão com a internet."
     fi
 }
 
 # Function to cleanup temporary files
 cleanup() {
-    log "INFO" "Cleaning up temporary files..." "YELLOW"
+    log "Infinity Nuvem" "Limpando arquivos temporários..." "YELLOW"
     rm -f "$ROOTFS_DIR/rootfs.tar.xz"
     rm -rf /tmp/sbin
 }
@@ -103,7 +103,7 @@ install() {
     local pretty_name="$2"
     local is_custom="${3:-false}"
     
-    log "INFO" "Preparing to install $pretty_name..." "GREEN"
+    log "Infinity Nuvem" "Preparando para instalar $pretty_name..." "GREEN"
     
     local url_path
     local image_names
@@ -116,14 +116,14 @@ install() {
     
     # Fetch available versions with error handling
     image_names=$(curl -s "$url_path" | grep 'href="' | grep -o '"[^/"]*/"' | tr -d '"/' | grep -v '^\.\.$') ||
-    error_exit "Failed to fetch available versions for $pretty_name"
+    error_exit "Falha ao buscar versões disponíveis para $pretty_name"
     
     # Display available versions
     local -a versions=($image_names)
     for i in "${!versions[@]}"; do
         printf "* [%d] %s (%s)\n" $((i + 1)) "$pretty_name" "${versions[i]}"
     done
-    printf "* [0] Go Back\n"
+    printf "* [0] Voltar\n"
     
     # Version selection with validation
     local version
@@ -135,11 +135,11 @@ install() {
         elif [[ "$version" =~ ^[0-9]+$ ]] && ((version >= 1 && version <= ${#versions[@]})); then
             break
         fi
-        log "ERROR" "Invalid selection. Please try again." "RED"
+        log "Infinity Nuvem" "Seleção inválida. Tente novamente." "RED"
     done
     
     local selected_version=${versions[$((version - 1))]}
-    log "INFO" "Selected version: $selected_version" "GREEN"
+    log "Infinity Nuvem" "Versão selecionada: $selected_version" "GREEN"
     
     # Download and extract rootfs
     download_and_extract_rootfs "$distro_name" "$selected_version" "$is_custom"
@@ -150,7 +150,7 @@ install_custom() {
     local pretty_name="$1"
     local url="$2"
     
-    log "INFO" "Installing $pretty_name..." "GREEN"
+    log "Infinity Nuvem" "Instalando $pretty_name..." "GREEN"
     
     mkdir -p "$ROOTFS_DIR"
     
@@ -158,11 +158,11 @@ install_custom() {
     file_name=$(basename "${url}")
     
     if ! curl -Ls "${url}" -o "$ROOTFS_DIR/$file_name"; then
-        error_exit "Failed to download $pretty_name rootfs"
+        error_exit "Falha ao baixar $pretty_name rootfs"
     fi
     
     if ! tar -xf "$ROOTFS_DIR/$file_name" -C "$ROOTFS_DIR"; then
-        error_exit "Failed to extract $pretty_name rootfs"
+        error_exit "Falha ao extrair $pretty_name rootfs"
     fi
     
     mkdir -p "$ROOTFS_DIR/home/container/"
@@ -177,14 +177,14 @@ get_chimera_linux() {
     local latest_file
     
     latest_file=$(curl -s "$base_url" | grep -o "chimera-linux-$ARCH-ROOTFS-[0-9]\{8\}-bootstrap\.tar\.gz" | sort -V | tail -n 1) ||
-    error_exit "Failed to fetch Chimera Linux version"
+    error_exit "Falha ao obter a versão do Chimera Linux"
     
     if [ -n "$latest_file" ]; then
         local date
         date=$(echo "$latest_file" | grep -o '[0-9]\{8\}')
         echo "${base_url}chimera-linux-$ARCH-ROOTFS-$date-bootstrap.tar.gz"
     else
-        error_exit "No suitable Chimera Linux version found"
+        error_exit "Nenhuma linha de Chimera adequada encontrada"
     fi
 }
 
@@ -195,22 +195,22 @@ install_opensuse_linux() {
         [2]="openSUSE Tumbleweed"
     )
 
-    printf "Select openSUSE version:\n"
+    printf "Selecione a versão do openSUSE:\n"
     for ((key=1; key<=${#opensuse_versions[@]}; key++)); do
         printf "* [%s] %s\n" "$key" "${opensuse_versions[$key]}"
     done
-    printf "* [0] Go Back\n"
+    printf "* [0] Voltar\n"
     
     local opensuse_version
     while true; do
-        printf "${colors[YELLOW]}Enter your choice (0-2): ${colors[NC]}\n"
+        printf "${colors[YELLOW]}Digite sua escolha (0-2): ${colors[NC]}\n"
         read -r opensuse_version
         case "$opensuse_version" in
             0)
             exec "$0"
             ;;
             1)
-            log "INFO" "Selected version: openSUSE Leap" "GREEN"
+            log "Infinity Nuvem" "Versão selecionada: openSUSE Leap" "GREEN"
             local url=""
             case "$ARCH" in
                 aarch64|x86_64)
@@ -218,22 +218,22 @@ install_opensuse_linux() {
                 install_custom "openSUSE Leap" "$url"
                 ;;
                 *)
-                error_exit "openSUSE Leap is not available for ${ARCH} architecture"
+                error_exit "O openSUSE Leap não está disponível para ${ARCH} arquitetura"
                 ;;
             esac
             break
             ;;
             2)
-            log "INFO" "Selected version: openSUSE Tumbleweed" "GREEN"
+            log "Infinity Nuvem" "Versão selecionada: openSUSE Tumbleweed" "GREEN"
             if [[ "$ARCH" == "x86_64" ]]; then
                 install_custom "openSUSE Tumbleweed" "https://download.opensuse.org/tumbleweed/appliances/opensuse-tumbleweed-dnf-image.x86_64-lxc-dnf.tar.xz"
             else
-                error_exit "openSUSE Tumbleweed is not available for ${ARCH} architecture"
+                error_exit "O openSUSE Tumbleweed não está disponível para ${ARCH} arquitetura"
             fi
             break
             ;;
         esac
-        log "ERROR" "Invalid selection. Please try again." "RED"
+        log "Infinity Nuvem" "Seleção inválida. Tente novamente." "RED"
     done
 }
 
@@ -255,7 +255,7 @@ download_and_extract_rootfs() {
     
     # Check if the distro support $ARCH_ALT
     if ! curl -s "$arch_url" | grep -q "$ARCH_ALT"; then
-        error_exit "This distro doesn't support $ARCH_ALT. Exiting...."
+        error_exit "Esta distribuição não suporta $ARCH_ALT. Saindo...."
         cleanup
         exit 1
     fi
@@ -263,18 +263,18 @@ download_and_extract_rootfs() {
     # Get latest version
     local latest_version
     latest_version=$(curl -s "$url" | grep 'href="' | grep -o '"[^/"]*/"' | tr -d '"' | sort -r | head -n 1) ||
-    error_exit "Failed to determine latest version"
+    error_exit "Falha ao determinar a versão mais recente"
     
-    log "INFO" "Downloading rootfs..." "GREEN"
+    log "Infinity Nuvem" "Baixando rootfs..." "GREEN"
     mkdir -p "$ROOTFS_DIR"
     
     if ! curl -Ls "${url}${latest_version}/rootfs.tar.xz" -o "$ROOTFS_DIR/rootfs.tar.xz"; then
-        error_exit "Failed to download rootfs"
+        error_exit "Falha ao baixar o rootfs"
     fi
     
-    log "INFO" "Extracting rootfs..." "GREEN"
+    log "Infinity Nuvem" "Extraindo rootfs..." "GREEN"
     if ! tar -xf "$ROOTFS_DIR/rootfs.tar.xz" -C "$ROOTFS_DIR"; then
-        error_exit "Failed to extract rootfs"
+        error_exit "Falha ao extrair rootfs"
     fi
     
     mkdir -p "$ROOTFS_DIR/home/container/"
@@ -286,7 +286,7 @@ post_install_config() {
     
     case "$distro" in
         "archlinux")
-            log "INFO" "Configuring Arch Linux specific settings..." "GREEN"
+            log "Infinity Nuvem" "Configurando configurações específicas do Arch Linux..." "GREEN"
             sed -i '/^#RootDir/s/^#//' "$ROOTFS_DIR/etc/pacman.conf"
             sed -i 's|/var/lib/pacman/|/var/lib/pacman|' "$ROOTFS_DIR/etc/pacman.conf"
             sed -i '/^#DBPath/s/^#//' "$ROOTFS_DIR/etc/pacman.conf"
@@ -296,22 +296,32 @@ post_install_config() {
 
 # Main menu display
 display_menu() {
-    printf "\033c"
-    printf "${colors[GREEN]}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${colors[NC]}\n"
-    printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
-    printf "${colors[GREEN]}┃                           ${colors[PURPLE]} Pterodactyl VPS EGG ${colors[GREEN]}                             ┃${colors[NC]}\n"
-    printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
-    printf "${colors[GREEN]}┃                          ${colors[RED]}© 2021 - $(date +%Y) ${colors[PURPLE]}@ysdragon${colors[GREEN]}                            ┃${colors[NC]}\n"
-    printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
-    printf "${colors[GREEN]}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${colors[NC]}\n"
-    printf "\n${colors[YELLOW]}Please choose your favorite distro:${colors[NC]}\n\n"
+printf "\033c"
+printf "${colors[GREEN]}┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓${colors[NC]}\n"
+printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                          ${colors[PURPLE]}Infinity Nuvem VPS${colors[GREEN]}                           ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                        ${colors[CYAN]}https://infinitynuvem/${colors[GREEN]}                        ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                   ${colors[RED]}© 2021 - $(date +%Y)  Infinity Nuvem${colors[GREEN]}                   ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}      .--.                           ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}     |o_o |                          ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}     |:_/ |                          ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}    //   \ \                         ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}   (|     | )                        ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}  /'\_   _/`\                        ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                       ${colors[YELLOW]}  \___)=(___/                        ${colors[GREEN]}┃${colors[NC]}\n"
+printf "${colors[GREEN]}┃                                                                             ┃${colors[NC]}\n"
+printf "${colors[GREEN]}┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛${colors[NC]}\n"
+printf "\n${colors[YELLOW]}Por favor, escolha sua distribuição(Sistema Operacional) favorita:${colors[NC]}\n\n"
+
     
     # Display all distributions
     for i in "${!distributions[@]}"; do
         printf "* [%d] %s\n" "$i" "${distributions[$i]%%:*}"
     done
     
-    printf "\n${colors[YELLOW]}Enter the desired distro (1-${num_distros}): ${colors[NC]}\n"
+    printf "\n${colors[YELLOW]}Digite a distribuição desejada (1-${num_distros}): ${colors[NC]}\n"
 }
 
 # Initial setup
